@@ -29,10 +29,11 @@ A comprehensive React Native mobile application for tabletop RPG players and dun
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- Expo CLI (`npm install -g @expo/cli`)
-- MongoDB (for backend)
+- **Node.js** (v18 or higher recommended)
+- **npm** or **yarn**
+- **Expo CLI** (`npm install -g @expo/cli`)
+- **MongoDB** (for backend - local installation or cloud instance)
+- **Android Studio** (for Android development) or **Xcode** (for iOS - macOS only)
 
 ### Frontend Setup
 ```bash
@@ -43,13 +44,26 @@ cd MistyStep
 npm install
 
 # Start Expo development server
-npm start
+npx expo start
 
 # Or run on specific platforms
-npm run android  # Android
-npm run ios      # iOS (macOS only)
-npm run web      # Web browser
+npx expo start --android    # Android device/emulator
+npx expo start --ios        # iOS simulator (macOS only)
+npx expo start --web        # Web browser
+
+# Alternative: Use the npm scripts
+npm start          # Opens Expo DevTools with QR code
+npm run android    # Launches on Android
+npm run ios        # Launches on iOS (macOS only)
+npm run web        # Launches in web browser
 ```
+
+### Mobile Device Setup
+1. **Install Expo Go** on your mobile device:
+   - [Android Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+   - [iOS App Store](https://apps.apple.com/app/expo-go/id982107779)
+2. **Scan QR code** displayed in terminal after running `npx expo start`
+3. **Connect to same WiFi network** as your development machine
 
 ### Backend Setup (Optional)
 ```bash
@@ -175,11 +189,14 @@ OPENAI_API_KEY=your-openai-key
 
 ## 📦 Available Scripts
 
-### Frontend
-- `npm start` - Start Expo development server
-- `npm run android` - Run on Android device/emulator
-- `npm run ios` - Run on iOS simulator (macOS only)
-- `npm run web` - Run in web browser
+### Frontend (React Native + Expo)
+- `npm start` or `npx expo start` - Start Expo development server with QR code
+- `npm run android` or `npx expo start --android` - Run on Android device/emulator
+- `npm run ios` or `npx expo start --ios` - Run on iOS simulator (macOS only)
+- `npm run web` or `npx expo start --web` - Run in web browser
+- `npx expo start --tunnel` - Start with tunnel connection (for remote devices)
+- `npx expo install` - Install Expo-compatible versions of packages
+- `npx expo doctor` - Check for common configuration issues
 
 ### Backend
 - `npm run dev` - Start development server with nodemon
@@ -231,10 +248,51 @@ OPENAI_API_KEY=your-openai-key
 
 ## 📱 Platform Support
 
-- ✅ **Android** - Full support with Expo
-- ✅ **iOS** - Full support with Expo  
+- ✅ **Android** - Full support with Expo (API 21+ / Android 5.0+)
+- ✅ **iOS** - Full support with Expo (iOS 13.4+)
 - ✅ **Web** - React Native Web support
 - 🔄 **Desktop** - Possible with Electron (future)
+
+## 🔧 Troubleshooting
+
+### Common Expo Issues
+
+**Metro bundler issues:**
+```bash
+# Clear Expo cache
+npx expo start --clear
+
+# Reset Metro cache
+npm start -- --reset-cache
+```
+
+**Device connection issues:**
+```bash
+# Use tunnel for remote connections
+npx expo start --tunnel
+
+# Check network connectivity
+npx expo doctor
+```
+
+**Package compatibility:**
+```bash
+# Install Expo-compatible versions
+npx expo install package-name
+
+# Check for incompatible packages
+npx expo doctor
+```
+
+**Android emulator not detecting:**
+1. Ensure Android Studio is installed and emulator is running
+2. Check that ADB is in your PATH
+3. Try `adb devices` to verify device connection
+
+**iOS simulator issues (macOS only):**
+1. Ensure Xcode Command Line Tools are installed: `xcode-select --install`
+2. Open iOS Simulator manually if needed
+3. Check iOS version compatibility (iOS 13.4+)
 
 ## 🚧 Development Roadmap
 
