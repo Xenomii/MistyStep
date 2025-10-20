@@ -1,7 +1,12 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_CHARACTER } from '../types';
+import axios from 'axios';
+
+
+const API_URL = 'http://localhost:3000';
 
 const useAppStore = create((set, get) => ({
   // Characters state
@@ -61,7 +66,7 @@ const useAppStore = create((set, get) => ({
   setCurrentCharacter: (character) => set({ currentCharacter: character }),
   
   // Campaign actions
-  addCampaign: (campaign) => {
+  addCampaign: async (campaign) => {
     const newCampaign = {
       ...campaign,
       id: uuidv4(),
@@ -79,6 +84,30 @@ const useAppStore = create((set, get) => ({
   
   setCurrentCampaign: (campaign) => set({ currentCampaign: campaign }),
   
+  deleteCampaign: (id) => {
+    const { campaigns, notes, currentCampaign } = get();
+
+    // 1️⃣ Remove the campaign
+    const updatedCampaigns = campaigns.filter(c => c.id !== id);
+
+    // 2️⃣ Also remove notes tied to that campaign
+    const updatedNotes = notes.filter(note => note.campaignId !== id);
+
+    // 3️⃣ Reset current campaign if needed
+    const isDeletingCurrent = currentCampaign?.id === id;
+
+    // 4️⃣ Update store
+    set({
+      campaigns: updatedCampaigns,
+      notes: updatedNotes,
+      currentCampaign: isDeletingCurrent ? null : currentCampaign,
+    });
+
+    // 5️⃣ Persist to AsyncStorage
+    get().saveCampaignsToStorage();
+    get().saveNotesToStorage();
+  },
+
   addNote: (note) => {
     const newNote = {
       ...note,

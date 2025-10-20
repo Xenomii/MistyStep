@@ -16,15 +16,6 @@ const campaignSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  userId: {
-    type: String,
-    required: true,
-    index: true
   }
 }, {
   timestamps: true
