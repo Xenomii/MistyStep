@@ -20,7 +20,7 @@ const NoteDetailScreen = ({ navigation }) => {
   const [content, setContent] = useState(note?.content || '');
   const [selectedTags, setSelectedTags] = useState(note?.tags || []);
   
-  const { addNote, updateNote } = useAppStore();
+  const { addNote, updateNote, deleteNote } = useAppStore();
 
   const handleSave = () => {
     if (!title.trim()) {
@@ -43,6 +43,25 @@ const NoteDetailScreen = ({ navigation }) => {
     }
     
     navigation.goBack();
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Note',
+      'Are you sure you want to delete this note?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteNote(note.id);
+            Alert.alert('Deleted', 'Note deleted successfully.');
+            navigation.goBack();
+          },
+        },
+      ]
+    );
   };
 
   const toggleTag = (tag) => {
@@ -101,6 +120,16 @@ const NoteDetailScreen = ({ navigation }) => {
         >
           Cancel
         </Button>
+        {!isNew && (
+        <Button
+          mode="outlined"
+          onPress={handleDelete}
+          style={styles.button}
+          textColor="red"
+        >
+          Delete
+        </Button>
+         )}
         <Button
           mode="contained"
           onPress={handleSave}
