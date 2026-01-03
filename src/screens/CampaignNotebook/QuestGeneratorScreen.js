@@ -15,7 +15,7 @@ import useAppStore from '../../store';
 
 const ai = new GoogleGenAI({apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY});
 
-const QuestGeneratorScreen = ({ navigation }) => { // Added navigation here
+const QuestGeneratorScreen = ({ navigation }) => {
   const [questType, setQuestType] = useState('Monster Hunt');
   const [setting, setSetting] = useState('Urban');
   const [partyLevel, setPartyLevel] = useState('');
@@ -43,7 +43,7 @@ const QuestGeneratorScreen = ({ navigation }) => { // Added navigation here
 
     setIsGenerating(true);
     try {
-      // 3. Prompt targeted for D&D 5e
+      // Prompt targeted for D&D 5e
       const promptText = `Act as an expert Dungeons & Dragons Dungeon Master. 
       Generate a creative quest for a D&D 5e campaign.
       Setting: ${setting}
@@ -59,13 +59,11 @@ const QuestGeneratorScreen = ({ navigation }) => { // Added navigation here
       }
       Use high-fantasy terminology and ensure the JSON is valid. Do not include markdown code blocks.`;
 
-      // 4. API call adjusted to match your official snippet structure
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash', // Using the model from your snippet
+        model: 'gemini-2.5-flash', 
         contents: promptText,
       });
 
-      // 5. Accessing response text as per your snippet
       const text = response.text;
 
       // Clean the response in case the AI still wraps it in markdown backticks
@@ -82,31 +80,24 @@ const QuestGeneratorScreen = ({ navigation }) => { // Added navigation here
   };
 
   const handleSaveToNotebook = () => {
-    if (!generatedQuest) return;
+  if (!generatedQuest) return;
 
-    const noteContent = `
-**Description**
-${generatedQuest.description}
-
-**Objectives**
-${generatedQuest.objectives.map(obj => `• ${obj}`).join('\n')}
-
-**Rewards**
-${generatedQuest.rewards}
-    `.trim();
-
-    const noteData = {
-      title: `Quest: ${generatedQuest.title}`,
-      content: noteContent,
-      tags: ['Quest', questType, setting],
-      campaignId: currentCampaign?.id,
-      createdAt: new Date().toISOString(),
-    };
-
-    addNote(noteData);
-    Alert.alert('Success', 'Quest saved to your Campaign Notes!');
-    navigation.goBack();
+  const noteData = {
+    title: generatedQuest.title,
+    isQuest: true, 
+    questDescription: generatedQuest.description,
+    questObjectives: generatedQuest.objectives.join('\n'), 
+    questRewards: generatedQuest.rewards,
+    content: generatedQuest.description, 
+    tags: ['Quest', questType, setting],
+    campaignId: currentCampaign?.id,
+    createdAt: new Date().toISOString(),
   };
+
+  addNote(noteData);
+  Alert.alert('Success', 'Quest saved to your Campaign Notes!');
+  navigation.goBack();
+};
 
   return (
     <Surface style={styles.container}>
