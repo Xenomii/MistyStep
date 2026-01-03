@@ -15,6 +15,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import useAppStore from '../../store';
 import { RACES, CLASSES, STATS, DEFAULT_CHARACTER } from '../../types';
+import { GoogleGenAI } from "@google/genai";
+
+const genAI = new GoogleGenAI({apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY});
 
 const schema = yup.object().shape({
   name: yup.string().required('Character name is required'),
@@ -62,39 +65,48 @@ const CharacterWizardScreen = ({ navigation }) => {
   const generateWithAI = async () => {
     setGeneratingWithAI(true);
     
-    // Simulate AI generation (replace with actual AI API call)
-    setTimeout(() => {
-      const randomNames = [
-        'Aelwyn Moonwhisper',
-        'Thorin Ironforge',
-        'Seraphina Dawnbringer',
-        'Grimjaw Stormhammer',
-        'Lyralei Swiftarrow',
-        'Vex Shadowbane',
-      ];
+    try {
+      const promptText = `Act as an expert Dungeons & Dragons Dungeon Master. 
+      Generate a creative D&D 5e character.
       
-      const randomBackstories = [
-        'A mysterious wanderer with a hidden past, seeking redemption for past deeds.',
-        'Born into nobility but chose the adventuring life to prove their worth.',
-        'A scholar turned adventurer after discovering an ancient prophecy.',
-        'Raised by wolves, now adapts to civilized society with unique perspectives.',
-        'A former soldier who lost everything and now fights for the innocent.',
-        'A talented artist whose magical abilities manifested through their craft.',
-      ];
-
-      const randomRace = RACES[Math.floor(Math.random() * RACES.length)];
-      const randomClass = CLASSES[Math.floor(Math.random() * CLASSES.length)];
-      const randomName = randomNames[Math.floor(Math.random() * randomNames.length)];
-      const randomBackstory = randomBackstories[Math.floor(Math.random() * randomBackstories.length)];
-
-      setValue('name', randomName);
-      setValue('race', randomRace);
-      setValue('class', randomClass);
-      setValue('backstory', randomBackstory);
+      Constraints:
+      - Name: Must be fantasy-based and NOT exceed five words.
+      - Race: Choose one from [${RACES.join(', ')}].
+      - Class: Choose one from [${CLASSES.join(', ')}].
       
+      Return ONLY a JSON object with this exact structure:
+      {
+        "name": "Character Name",
+        "race": "Selected Race",
+        "class": "Selected Class",
+        "backstory": "A compelling 2-3 sentence backstory."
+      }
+      Do not include markdown code blocks.`;
+
+      const response = await genAI.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: promptText,
+      });
+
+      const text = response.text;
+      const cleanJson = text.replace(/```json|```/g, "").trim();
+      const characterData = JSON.parse(cleanJson);
+
+      // Apply generated values to form
+      setValue('name', characterData.name);
+      setValue('race', characterData.race);
+      setValue('class', characterData.class);
+      setValue('backstory', characterData.backstory);
+      
+      // Generate stats locally to ensure valid D&D mechanics
       generateRandomStats();
+      
+    } catch (error) {
+      console.error("AI Generation Error:", error);
+      Alert.alert('AI Error', 'Failed to reach the DM. Check your connection or API key.');
+    } finally {
       setGeneratingWithAI(false);
-    }, 2000);
+    }
   };
 
   const calculateHitPoints = () => {

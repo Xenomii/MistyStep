@@ -7,6 +7,7 @@ import {
   Chip,
   Text,
   Card,
+  Divider,
 } from 'react-native-paper';
 import { useRoute } from '@react-navigation/native';
 import useAppStore from '../../store';
@@ -16,22 +17,52 @@ const NoteDetailScreen = ({ navigation }) => {
   const route = useRoute();
   const { note, isNew = false, campaign } = route.params || {};
   
+  const { addNote, updateNote, deleteNote, currentCampaign } = useAppStore();
+
+  // Determine if this is a structured Quest or a normal Note
+  const [isQuest, setIsQuest] = useState(note?.isQuest || false);
+
+  // Common State
   const [title, setTitle] = useState(note?.title || '');
-  const [content, setContent] = useState(note?.content || '');
   const [selectedTags, setSelectedTags] = useState(note?.tags || []);
-  
-  const { addNote, updateNote, deleteNote } = useAppStore();
+
+  // Normal Note State
+  const [content, setContent] = useState(note?.content || '');
+
+  // Quest-Specific State
+  const [questDescription, setQuestDescription] = useState(note?.questDescription || '');
+  const [questObjectives, setQuestObjectives] = useState(note?.questObjectives || '');
+  const [questRewards, setQuestRewards] = useState(note?.questRewards || '');
+
+  const toggleTag = (tag) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter((t) => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
 
   const handleSave = () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a note title.');
+      Alert.alert('Error', 'Please enter a title.');
       return;
     }
 
     const noteData = {
       title: title.trim(),
-      content: content.trim(),
       tags: selectedTags,
+      campaignId: note?.campaignId || campaign?.id || currentCampaign?.id,
+      isQuest: isQuest,
+      // Save structured data if quest, otherwise save standard content
+      ...(isQuest ? {
+        questDescription: questDescription.trim(),
+        questObjectives: questObjectives.trim(),
+        questRewards: questRewards.trim(),
+        // We sync description to 'content' so it still shows a preview in the list view
+        content: questDescription.trim(), 
+      } : {
+        content: content.trim(),
+      })
     };
 
     if (isNew) {
@@ -41,7 +72,6 @@ const NoteDetailScreen = ({ navigation }) => {
       updateNote(note.id, noteData);
       Alert.alert('Success', 'Note updated successfully!');
     }
-    
     navigation.goBack();
   };
 
@@ -56,19 +86,10 @@ const NoteDetailScreen = ({ navigation }) => {
           style: 'destructive',
           onPress: () => {
             deleteNote(note.id);
-            Alert.alert('Deleted', 'Note deleted successfully.');
             navigation.goBack();
           },
         },
       ]
-    );
-  };
-
-  const toggleTag = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
     );
   };
 
@@ -78,31 +99,71 @@ const NoteDetailScreen = ({ navigation }) => {
         <Card style={styles.card}>
           <Card.Content>
             <TextInput
-              label="Note Title"
+              label={isQuest ? "Quest Title" : "Note Title"}
               value={title}
               onChangeText={setTitle}
               style={styles.input}
-            />
-            
-            <TextInput
-              label="Content"
-              value={content}
-              onChangeText={setContent}
-              multiline
-              numberOfLines={15}
-              style={styles.textArea}
+              mode="outlined"
             />
 
-            <Text variant="titleMedium" style={styles.tagsTitle}>
-              Tags
-            </Text>
+            {isQuest ? (
+              /* QUEST-SPECIFIC MULTI-INPUT SECTION */
+              <View>
+                <TextInput
+                  label="Quest Description"
+                  value={questDescription}
+                  onChangeText={setQuestDescription}
+                  multiline
+                  numberOfLines={4}
+                  style={styles.input}
+                  mode="outlined"
+                />
+                
+                <TextInput
+                  label="Objectives"
+                  placeholder="• Objective 1&#10;• Objective 2"
+                  value={questObjectives}
+                  onChangeText={setQuestObjectives}
+                  multiline
+                  numberOfLines={4}
+                  style={styles.input}
+                  mode="outlined"
+                />
+
+                <TextInput
+                  label="Rewards"
+                  value={questRewards}
+                  onChangeText={setQuestRewards}
+                  multiline
+                  numberOfLines={2}
+                  style={styles.input}
+                  mode="outlined"
+                />
+              </View>
+            ) : (
+              /* NORMAL NOTE SECTION */
+              <TextInput
+                label="Content"
+                value={content}
+                onChangeText={setContent}
+                multiline
+                numberOfLines={15}
+                style={styles.textArea}
+                mode="outlined"
+              />
+            )}
+
+            <Divider style={styles.divider} />
+
+            <Text variant="titleMedium" style={styles.tagsTitle}>Tags</Text>
             <View style={styles.tagsContainer}>
-              {NOTE_TAGS.map(tag => (
+              {NOTE_TAGS.map((tag) => (
                 <Chip
                   key={tag}
                   selected={selectedTags.includes(tag)}
                   onPress={() => toggleTag(tag)}
                   style={styles.tag}
+                  showSelectedOverlay
                 >
                   {tag}
                 </Chip>
@@ -120,22 +181,24 @@ const NoteDetailScreen = ({ navigation }) => {
         >
           Cancel
         </Button>
+        
         {!isNew && (
-        <Button
-          mode="outlined"
-          onPress={handleDelete}
-          style={styles.button}
-          textColor="red"
-        >
-          Delete
-        </Button>
-         )}
+          <Button
+            mode="outlined"
+            onPress={handleDelete}
+            style={styles.button}
+            textColor="#ba1a1a"
+          >
+            Delete
+          </Button>
+        )}
+
         <Button
           mode="contained"
           onPress={handleSave}
           style={styles.button}
         >
-          {isNew ? 'Create Note' : 'Update Note'}
+          {isNew ? 'Create' : 'Update'}
         </Button>
       </View>
     </Surface>
@@ -153,32 +216,43 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 16,
+    elevation: 1,
   },
   input: {
     marginBottom: 16,
+    backgroundColor: 'white',
   },
   textArea: {
     marginBottom: 16,
+    minHeight: 300,
+    backgroundColor: 'white',
+  },
+  divider: {
+    marginVertical: 8,
+    marginBottom: 16,
   },
   tagsTitle: {
-    marginBottom: 8,
+    marginBottom: 12,
+    fontWeight: 'bold',
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
   tag: {
-    margin: 4,
+    marginBottom: 4,
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     padding: 16,
+    gap: 8,
     backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
   },
   button: {
     flex: 1,
-    marginHorizontal: 8,
   },
 });
 
